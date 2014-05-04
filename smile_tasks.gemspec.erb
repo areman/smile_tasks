@@ -1,0 +1,14 @@
+<% require 'date' %>
+
+require 'rake'
+
+Gem::Specification.new do |gem|
+  gem.platform = 'java'
+  gem.name     = 'smile_tasks'
+  gem.version  = '<%= version %>'
+  gem.date     = '<%= DateTime.now.strftime('%Y-%m-%d') %>'
+  gem.summary  = ""
+  gem.authors  = ['Andre Kullmann']
+  gem.files    = FileList[ '**/*' ]
+
+end

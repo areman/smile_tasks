@@ -1,0 +1,116 @@
+import org.jruby.Main as JRuby
+import org.jruby.RubyInstanceConfig as RubyInstanceConfig
+
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath group: 'org.jruby', name: 'jruby-complete', version: '1.6.7.2'
+    }
+}
+
+apply plugin: 'java'
+
+
+
+
+tasks.withType(JavaCompile) {
+    sourceCompatibility = '1.7'
+    targetCompatibility = '1.7'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile group: 'org.jruby', name: 'jruby', version: '1.7.12'
+    compile group: 'junit', name: 'junit', version: '4.11'
+}
+
+sourceSets {
+    main {
+        java {
+            srcDir 'src/main/java'
+        }
+    }
+}
+
+
+def runRuby( commandLine ) {
+
+    String[] array = commandLine instanceof String[] ? commandLine : commandLine.toArray( new String[0] )
+    RubyInstanceConfig config = new RubyInstanceConfig()
+    JRuby jruby = new JRuby( config )
+    JRuby.Status status = jruby.run( array )
+
+    if( status.getStatus() != 0 ) {
+        throw new org.gradle.api.GradleScriptException( "Error while building gem " + Arrays.asList( array ), null )
+    }
+}
+
+
+task gem( dependsOn: 'jar' ) {
+
+  doLast {
+
+      copy {
+          from    'build/libs'
+          include '*.jar'
+          into    'src/main/ruby/lib'
+      }
+
+      String script =
+              "require 'erb'; " +
+              "template = ERB.new( File.new('smile_tasks.gemspec.erb').read, nil, '%'); " +
+              "version=$version; " +
+              "File.open( 'smile_tasks.gemspec', 'w' ) { |f| f.write( template.result(binding) ) }";
+
+      //println script
+      runRuby( ["-e", script] )
+
+      runRuby( '-Csrc/main/ruby -S gem build ../../../smile_tasks.gemspec'.split() )
+
+      delete {
+          delete fileTree( dir: 'src/main/ruby/lib', include: '*.jar')
+      }
+
+      copy {
+          from  'src/main/ruby'
+          include '*.gem'
+          into 'build/libs'
+      }
+
+      delete {
+          delete fileTree( dir: 'src/main/ruby', include: '*.gem')
+      }
+
+
+  }
+}
+
+
+task installGems( dependsOn: 'gem' ) {
+    doLast {
+        runRuby( '-S gem install --no-rdoc --no-ri -i build/gems build/libs/*.gem'.split() )
+    }
+}
+
+test {
+    dependsOn installGems
+    outputs.upToDateWhen { false }
+
+    doLast {
+        runRuby( [ '-e', " ENV['GEM_PATH']='build/gems'; require 'rubygems'; require 'smile_tasks'; Dir.glob('src/test/ruby/**/*_test.rb') { |f| require f } " ] )
+    }
+
+    afterTest { desc, result ->
+        println "Executing test ${desc.name} [${desc.className}] with result: ${result.resultType}"
+    }
+}
+
+task dist( dependsOn: ['clean', 'test'] ) {
+
+}
