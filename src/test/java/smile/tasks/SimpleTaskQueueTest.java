@@ -36,24 +36,11 @@ public class SimpleTaskQueueTest extends TestCase {
         };
     }
 
-    private class CountingResultHandler<T> implements ResultHandler<T> {
+    private class ResultAsListResultHandler<T> implements ResultHandler<T> {
 
         public int resultCount = 0;
 
         public int exceptionCount = 0;
-
-        @Override
-        public void onResult(T result) {
-            resultCount += 1;
-        }
-
-        @Override
-        public void onException(Exception e) {
-            exceptionCount += 1;
-        }
-    }
-
-    private class ResultAsListResultHandler<T> extends CountingResultHandler<T> {
 
         public List<T> results = new ArrayList<T>();
 
@@ -61,20 +48,21 @@ public class SimpleTaskQueueTest extends TestCase {
 
         @Override
         public void onResult(T result) {
-            super.onResult(result);
+            resultCount += 1;
             results.add( result );
         }
 
         @Override
         public void onException(Exception e) {
-            super.onException(e);
+            e.printStackTrace();
+            exceptionCount += 1;
             exceptions.add( e );
         }
     }
 
     public void testT() {
 
-        CountingResultHandler<String> handler = new CountingResultHandler<String>();
+        ResultAsListResultHandler<String> handler = new ResultAsListResultHandler<String>();
 
         SimpleTaskQueue<String> queue = new SimpleTaskQueue<String>( 100, 1, handler );
 
@@ -104,6 +92,38 @@ public class SimpleTaskQueueTest extends TestCase {
         assertEquals( 0, handler.exceptionCount );
 
         assertEquals( 2, new HashSet<Long>( handler.results ).size() );
+    }
+
+    public void testW() {
+
+        ResultAsListResultHandler<String> handler = new ResultAsListResultHandler<String>();
+
+        SimpleTaskQueue<String> queue = new SimpleTaskQueue<String>( 2, 2, handler );
+
+        long start = System.currentTimeMillis();
+
+        for( int i=0; i<10; i++ ) {
+            queue.submit( new Callable<String>() {
+
+                @Override
+                public String call() throws Exception {
+                    Thread.sleep(500);
+                    return null;
+                }
+            } );
+        }
+
+        long end = System.currentTimeMillis();
+
+        long time = end - start;
+
+        assertTrue( time + "", time >= 2000 );
+
+        queue.await();
+
+        assertEquals( 0, handler.exceptionCount );
+        assertEquals( 10, handler.resultCount );
+
     }
 
 }

@@ -58,14 +58,33 @@ import java.util.concurrent.Callable;
         RubyRunnable runnable = new RubyRunnable( thread, getArgs(), getBlock() );
         runnable.run();
 
-        Field field = RubyThread.class.getDeclaredField("exitingException");
-        field.setAccessible(true);
-        Exception e = (Exception) field.get(thread);
-        if( e != null )
-            throw e;
+        throwError( thread );
 
-        field = RubyThread.class.getDeclaredField("finalResult");
+        return getValue( thread );
+    }
+
+    public IRubyObject getValue( RubyThread thread ) throws Exception {
+        Field field = RubyThread.class.getDeclaredField("finalResult");
         field.setAccessible(true);
         return (IRubyObject) field.get( thread );
+    }
+
+    private void throwError( RubyThread thread ) throws Exception {
+        Field field = RubyThread.class.getDeclaredField("exitingException");
+        field.setAccessible(true);
+        Object e = field.get(thread);
+
+        if( e instanceof Error ) {
+            throw (Error) e;
+        }
+
+        if( e instanceof Exception ) {
+            throw (Exception) e;
+        }
+
+        if( e instanceof Throwable) {
+            throw new Exception( (Throwable) e );
+        }
+
     }
 }
