@@ -65,7 +65,8 @@ task gem( dependsOn: 'jar' ) {
       String script =
               "require 'erb'; " +
               "template = ERB.new( File.new('smile_tasks.gemspec.erb').read, nil, '%'); " +
-              "version=$version; " +
+              "version='$version'; " +
+              "version='$version'; " +
               "File.open( 'smile_tasks.gemspec', 'w' ) { |f| f.write( template.result(binding) ) }";
 
       //println script
@@ -98,13 +99,19 @@ task installGems( dependsOn: 'gem' ) {
     }
 }
 
+task testRuby(type: GradleBuild) {
+    buildFile = 'test.gradle'
+    tasks = ['test']
+}
+
 test {
     dependsOn installGems
+    dependsOn testRuby
     outputs.upToDateWhen { false }
 
-    doLast {
-        runRuby( [ '-e', " ENV['GEM_PATH']='build/gems'; require 'rubygems'; require 'smile_tasks'; Dir.glob('src/test/ruby/**/*_test.rb') { |f| require f } " ] )
-    }
+    //doLast {
+    //    runRuby( [ '-e', " ENV['GEM_PATH']='build/gems'; require 'rubygems'; require 'smile_tasks'; Dir.glob('src/test/ruby/**/*_test.rb') { |f| require f } " ] )
+    //}
 
     afterTest { desc, result ->
         println "Executing test ${desc.name} [${desc.className}] with result: ${result.resultType}"

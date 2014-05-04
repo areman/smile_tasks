@@ -1,0 +1,39 @@
+/*
+ the second build file is required because as test runtime we need jruby 1.7.*
+ */
+import org.jruby.Main as JRuby
+import org.jruby.RubyInstanceConfig as RubyInstanceConfig
+
+buildscript {
+
+    repositories {
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath group: 'org.jruby', name: 'jruby', version: '1.7.12'
+    }
+
+}
+
+def runRuby( commandLine ) {
+
+    String[] array = commandLine instanceof String[] ? commandLine : commandLine.toArray( new String[0] )
+    RubyInstanceConfig config = new RubyInstanceConfig()
+    JRuby jruby = new JRuby( config )
+    JRuby.Status status = jruby.run( array )
+
+    if( status.getStatus() != 0 ) {
+        throw new org.gradle.api.GradleScriptException( "Error while building gem " + Arrays.asList( array ), null )
+    }
+}
+
+
+
+task test {
+
+    doLast {
+        runRuby( [ '-e', "p JRUBY_VERSION; ENV['GEM_PATH']='build/gems'; require 'rubygems'; require 'smile_tasks'; Dir.glob('src/test/ruby/**/*_test.rb') { |f| require File.expand_path f } " ] )
+    }
+
+}

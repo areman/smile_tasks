@@ -62,7 +62,7 @@ public class JRubyHashFriend extends JRubyAbstractFriend {
 
     public IRubyObject value( String key ) {
         RubySymbol symbol = getRuntime().newSymbol(key);
-        IRubyObject value = (IRubyObject) hash.get( symbol );
+        IRubyObject value = (IRubyObject) hash.op_aref( getRuntime().getCurrentContext(), symbol );
         return value;
     }
 

@@ -35,7 +35,15 @@ public class JRubySimpleTaskQueue extends RubyObject {
 
     public static RubyClass define(Ruby runtime) {
 
-        return friend(runtime).clazz( JRubySimpleTaskQueue.class ).define( ALLOCATOR );
+        try {
+            RubyClass result = friend(runtime).clazz(JRubySimpleTaskQueue.class).define(ALLOCATOR);
+            //System.out.println( result.getName() );
+            return result;
+        } catch( RuntimeException e ) {
+            e.printStackTrace();
+            throw e;
+        }
+
     }
 
     private Block onErrorBlock;

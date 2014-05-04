@@ -28,7 +28,7 @@ public class JRubyClassesFriend {
         if( path.isEmpty() )
             return runtime.getObject();
 
-        RubyModule m = runtime.fastGetModule( path.get(0) ) ;
+        RubyModule m = runtime.getModule( path.get(0) ) ;
 
         for (int i = 1; i < path.size(); i++) {
             IRubyObject tmp = m.getConstantNoConstMissing( path.get(i) );

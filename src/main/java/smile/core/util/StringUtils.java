@@ -32,7 +32,7 @@ public class StringUtils {
 
             list.add(s);
 
-            j=i+1;
+            j=i+delim.length();
         }
 
         String s = str.substring(j);

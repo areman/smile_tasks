@@ -55,6 +55,7 @@ public class JRubyClassFriend extends JRubyAbstractFriend {
 
         JRubyClassesFriend classes = JRubyFriend.friend( getRuntime() ).classes();
 
+        //System.out.println("PATH " + path );
         RubyModule module = classes.getModule(path);
         RubyClass result = module.defineClassUnder( name, classes.getClass(parent), allocator );
 

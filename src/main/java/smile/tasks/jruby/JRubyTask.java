@@ -7,6 +7,7 @@ import org.jruby.runtime.Block;
 import org.jruby.runtime.ThreadContext;
 import org.jruby.runtime.builtin.IRubyObject;
 
+import java.lang.reflect.Field;
 import java.util.concurrent.Callable;
 
 /**
@@ -57,6 +58,14 @@ import java.util.concurrent.Callable;
         RubyRunnable runnable = new RubyRunnable( thread, getArgs(), getBlock() );
         runnable.run();
 
-        return thread.value();
+        Field field = RubyThread.class.getDeclaredField("exitingException");
+        field.setAccessible(true);
+        Exception e = (Exception) field.get(thread);
+        if( e != null )
+            throw e;
+
+        field = RubyThread.class.getDeclaredField("finalResult");
+        field.setAccessible(true);
+        return (IRubyObject) field.get( thread );
     }
 }
